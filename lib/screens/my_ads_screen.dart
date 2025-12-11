@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobile_app_haraj/screens/home_screen.dart';
+import 'package:mobile_app_haraj/screens/seleted_adtype_screen.dart';
+import 'package:mobile_app_haraj/screens/favorites_screen.dart';
+import 'package:mobile_app_haraj/screens/settings_screen.dart';
+import 'package:mobile_app_haraj/widgets/app_header.dart';
+import 'package:mobile_app_haraj/widgets/bottom_nav_bar.dart';
 import 'dart:convert';
 import '../utils/constants.dart';
 import '../services/auth_service.dart';
@@ -20,6 +25,7 @@ class _MyAdsScreenState extends State<MyAdsScreen> {
   List<Ad> regularAds = [];
   bool isLoading = true;
   bool isLoggedIn = false;
+  int _currentIndex = 3; // لأن MyAdsScreen هي الشاشة رقم 3
 
   @override
   void initState() {
@@ -99,52 +105,213 @@ class _MyAdsScreenState extends State<MyAdsScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // كلمة "العودة للرئيسية" على اليسار (البداية)
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => HomeScreen()),
-                );
-              },
-              child: const Row(
-                children: [
-                  Text(
-                    'العودة للرئيسية',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: AppColors.primaryColor,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // كلمة "إعلاناتي" على اليمين (النهاية)
-            const Text(
-              'إعلاناتي',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        centerTitle: false,
+  void _onNavItemTapped(int index) {
+    if (index == 2) { // زر إضافة إعلان
+      _checkLoginAndNavigateToAddAd();
+      return;
+    }
+
+    if (index == _currentIndex) return;
+
+    setState(() {
+      _currentIndex = index;
+    });
+
+    // التنقل بين الصفحات
+    switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
+        break;
+      case 1:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => FavoritesScreen()),
+        );
+        break;
+      case 3:
+      // نحن بالفعل هنا في MyAdsScreen
+        break;
+      case 4:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => SettingsScreen()),
+        );
+        break;
+    }
+  }
+
+  void _checkLoginAndNavigateToAddAd() async {
+    final isLoggedIn = await AuthService.isLoggedIn();
+
+    if (!isLoggedIn) {
+      _showLoginRequiredDialog();
+      return;
+    }
+
+    final userProfile = await AuthService.fetchUserProfile();
+
+    if (userProfile == null) {
+      _showErrorDialog('فشل في تحميل بيانات المستخدم');
+      return;
+    }
+
+    final selectedType = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SelectAdTypeScreen(categoryId: '0'),
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primaryColor))
-          : _buildContent(),
+    );
+
+    if (selectedType != null && selectedType is String) {
+      _handleAdTypeSelection(selectedType, userProfile);
+    }
+  }
+
+  void _handleAdTypeSelection(String adType, Map<String, dynamic> userProfile) {
+    Navigator.pushNamed(
+      context,
+      '/add-ad',
+      arguments: {
+        'adType': adType,
+        'userProfile': userProfile,
+      },
     );
   }
 
-  Widget _buildContent() {
+  void _showLoginRequiredDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'تسجيل الدخول مطلوب',
+          textAlign: TextAlign.center,
+        ),
+        content: const Text(
+          'يرجى تسجيل الدخول أولاً لإضافة إعلان',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/login');
+            },
+            child: const Text('تسجيل الدخول'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'خطأ',
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          message,
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('حسناً'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _buildScreenContent(),
+
+    );
+  }
+
+  Widget _buildScreenContent() {
+    return Column(
+      children: [
+        // عنوان الصفحة تحت AppHeader
+        _buildPageHeader(),
+
+        // محتوى الصفحة
+        Expanded(
+          child: isLoading
+              ? _buildLoadingView()
+              : _buildMainContent(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPageHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: Colors.grey[200]!, width: 1),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // زر العودة للرئيسية
+          GestureDetector(
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => HomeScreen()),
+              );
+            },
+            child: const Row(
+              children: [
+                Text(
+                  'العودة للرئيسية',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // عنوان الصفحة
+          const Text(
+            'إعلاناتي',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.darkColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingView() {
+    return const Center(
+      child: CircularProgressIndicator(
+        color: AppColors.primaryColor,
+      ),
+    );
+  }
+
+  Widget _buildMainContent() {
     if (!isLoggedIn) {
       return _buildGuestView();
     }
@@ -153,106 +320,6 @@ class _MyAdsScreenState extends State<MyAdsScreen> {
       return _buildEmptyView();
     }
 
-    return _buildAdsList();
-  }
-
-  Widget _buildGuestView() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.chat_bubble_outline,
-            size: 80,
-            color: AppColors.grayColor,
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'يرجى تسجيل الدخول',
-            style: TextStyle(
-              fontSize: 18,
-              color: AppColors.darkColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'لتتمكن من عرض إعلاناتك',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.grayColor,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pushNamed('/login');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('تسجيل الدخول'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyView() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.chat_bubble_outline,
-            size: 80,
-            color: AppColors.grayColor,
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'ليس لديك إعلانات',
-            style: TextStyle(
-              fontSize: 18,
-              color: AppColors.darkColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'يمكنك إضافة إعلان جديد بالضغط على زر "+"',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.grayColor,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pushNamed('/add-ad');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('إضافة إعلان جديد'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAdsList() {
     return RefreshIndicator(
       onRefresh: _refreshAds,
       color: AppColors.primaryColor,
@@ -279,34 +346,147 @@ class _MyAdsScreenState extends State<MyAdsScreen> {
     );
   }
 
+  Widget _buildGuestView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.person_outline,
+              size: 80,
+              color: AppColors.grayColor,
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'يرجى تسجيل الدخول',
+              style: TextStyle(
+                fontSize: 18,
+                color: AppColors.darkColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'لتتمكن من عرض إعلاناتك',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.grayColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pushNamed('/login');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('تسجيل الدخول'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.chat_bubble_outline,
+              size: 80,
+              color: AppColors.grayColor,
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'ليس لديك إعلانات',
+              style: TextStyle(
+                fontSize: 18,
+                color: AppColors.darkColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'يمكنك إضافة إعلان جديد بالضغط على زر "+"',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.grayColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                _checkLoginAndNavigateToAddAd();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('إضافة إعلان جديد'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSectionHeader(String title, int count) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.lightColor,
-            borderRadius: BorderRadius.circular(20),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // العدد
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.lightColor,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              count.toString(),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.darkColor,
+              ),
+            ),
           ),
-          child: Text(
-            count.toString(),
+
+          // العنوان
+          Text(
+            title,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: AppColors.darkColor,
             ),
           ),
-        ),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.darkColor,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -314,15 +494,15 @@ class _MyAdsScreenState extends State<MyAdsScreen> {
     return SizedBox(
       height: 250,
       child: Directionality(
-        textDirection: TextDirection.ltr, // إضافة هذا السطر
+        textDirection: TextDirection.ltr,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
-          reverse: true, // هذا السطر مهم لبدء العرض من اليمين
+          reverse: true,
           itemCount: featuredAds.length,
           itemBuilder: (context, index) {
             final ad = featuredAds[index];
             return Padding(
-              padding: const EdgeInsets.only(left: 12), // تغيير right إلى left
+              padding: const EdgeInsets.only(left: 12),
               child: SizedBox(
                 width: 160,
                 child: AdCard(ad: ad, isGridItem: true),
@@ -338,15 +518,15 @@ class _MyAdsScreenState extends State<MyAdsScreen> {
     return SizedBox(
       height: 250,
       child: Directionality(
-        textDirection: TextDirection.ltr, // إضافة هذا السطر
+        textDirection: TextDirection.ltr,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
-          reverse: true, // هذا السطر مهم لبدء العرض من اليمين
+          reverse: true,
           itemCount: regularAds.length,
           itemBuilder: (context, index) {
             final ad = regularAds[index];
             return Padding(
-              padding: const EdgeInsets.only(left: 12), // تغيير right إلى left
+              padding: const EdgeInsets.only(left: 12),
               child: SizedBox(
                 width: 160,
                 child: AdCard(ad: ad, isGridItem: true),

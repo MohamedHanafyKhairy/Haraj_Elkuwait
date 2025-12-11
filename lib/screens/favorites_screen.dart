@@ -366,7 +366,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   Widget _buildFavoriteAdCard(Ad ad) {
     return Stack(
       children: [
-        AdCard(ad: ad, isGridItem: true),
+        AdCard(ad: ad, isGridItem: true,),
         // زر إزالة من المفضلة
         Positioned(
           top: 8,

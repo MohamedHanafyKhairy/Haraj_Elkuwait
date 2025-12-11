@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobile_app_haraj/screens/seleted_adtype_screen.dart';
+import 'package:mobile_app_haraj/screens/settings_screen.dart';
 import 'package:mobile_app_haraj/widgets/app_header.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
@@ -21,8 +22,11 @@ import '../widgets/categories_grid.dart';
 import '../widgets/featured_ads_slider.dart';
 import '../widgets/latest_ads_slider.dart';
 import '../widgets/search_bar_widget.dart';
+import 'favorites_screen.dart';
+import 'home_screen.dart';
 import 'login.dart';
 import 'category_screen.dart';
+import 'my_ads_screen.dart';
 
 class AdDetailScreen extends StatefulWidget {
   final Ad ad;
@@ -486,39 +490,80 @@ class _AdDetailScreenState extends State<AdDetailScreen> {
     );
   }
   void _onNavItemTapped(int index) {
-    if (index == 2) { // زر إضافة إعلان
-      // التحقق من تسجيل الدخول أولاً
+    if (index == 2) {
       _checkLoginAndNavigateToAddAd();
-    } else {
-      setState(() => _currentIndex = index);
+      return;
     }
-    if (index == _currentIndex) return;
 
+    // تحديث الحالة أولاً
     setState(() {
       _currentIndex = index;
     });
 
-    // التنقل بين الصفحات حسب الفهرس
+    // استبدال الشاشة الحالية بشاشة جديدة مع الحفاظ على الـ AppBar و BottomNavBar
     switch (index) {
       case 0:
-        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Scaffold(
+              appBar: AppHeader(),
+              body: HomeScreen(),
+              bottomNavigationBar: BottomNavBar(
+                currentIndex: 0,
+                onTap: _onNavItemTapped,
+              ),
+            ),
+          ),
+        );
         break;
       case 1:
-        Navigator.pushNamedAndRemoveUntil(context, '/favorites', (route) => false);
-        break;
-      case 2:
-        Navigator.pushNamed(context, '/add-ad');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Scaffold(
+              appBar: AppHeader(),
+              body: FavoritesScreen(),
+              bottomNavigationBar: BottomNavBar(
+                currentIndex: 1,
+                onTap: _onNavItemTapped,
+              ),
+            ),
+          ),
+        );
         break;
       case 3:
-        Navigator.pushNamedAndRemoveUntil(context, '/my-ads', (route) => false);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Scaffold(
+              appBar: AppHeader(),
+              body: MyAdsScreen(),
+              bottomNavigationBar: BottomNavBar(
+                currentIndex: 3,
+                onTap: _onNavItemTapped,
+              ),
+            ),
+          ),
+        );
         break;
       case 4:
-        Navigator.pushNamedAndRemoveUntil(context, '/settings', (route) => false);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Scaffold(
+              appBar: AppHeader(),
+              body: SettingsScreen(),
+              bottomNavigationBar: BottomNavBar(
+                currentIndex: 4,
+                onTap: _onNavItemTapped,
+              ),
+            ),
+          ),
+        );
         break;
     }
   }
-
-
   @override
   void initState() {
     super.initState();
