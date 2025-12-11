@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobile_app_haraj/screens/home_screen.dart';
@@ -110,11 +109,14 @@ class _MyAdsScreenState extends State<MyAdsScreen> {
             // كلمة "العودة للرئيسية" على اليسار (البداية)
             GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen(),));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => HomeScreen()),
+                );
               },
               child: const Row(
                 children: [
-                  const Text(
+                  Text(
                     'العودة للرئيسية',
                     style: TextStyle(
                       fontSize: 18,
@@ -135,7 +137,6 @@ class _MyAdsScreenState extends State<MyAdsScreen> {
           ],
         ),
         centerTitle: false,
-
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primaryColor))
@@ -312,19 +313,23 @@ class _MyAdsScreenState extends State<MyAdsScreen> {
   Widget _buildFeaturedAdsGrid() {
     return SizedBox(
       height: 250,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: featuredAds.length,
-        itemBuilder: (context, index) {
-          final ad = featuredAds[index];
-          return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: SizedBox(
-              width: 160,
-              child: AdCard(ad: ad, isGridItem: true),
-            ),
-          );
-        },
+      child: Directionality(
+        textDirection: TextDirection.ltr, // إضافة هذا السطر
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          reverse: true, // هذا السطر مهم لبدء العرض من اليمين
+          itemCount: featuredAds.length,
+          itemBuilder: (context, index) {
+            final ad = featuredAds[index];
+            return Padding(
+              padding: const EdgeInsets.only(left: 12), // تغيير right إلى left
+              child: SizedBox(
+                width: 160,
+                child: AdCard(ad: ad, isGridItem: true),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -332,19 +337,23 @@ class _MyAdsScreenState extends State<MyAdsScreen> {
   Widget _buildRegularAdsGrid() {
     return SizedBox(
       height: 250,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: regularAds.length,
-        itemBuilder: (context, index) {
-          final ad = regularAds[index];
-          return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: SizedBox(
-              width: 160,
-              child: AdCard(ad: ad, isGridItem: true),
-            ),
-          );
-        },
+      child: Directionality(
+        textDirection: TextDirection.ltr, // إضافة هذا السطر
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          reverse: true, // هذا السطر مهم لبدء العرض من اليمين
+          itemCount: regularAds.length,
+          itemBuilder: (context, index) {
+            final ad = regularAds[index];
+            return Padding(
+              padding: const EdgeInsets.only(left: 12), // تغيير right إلى left
+              child: SizedBox(
+                width: 160,
+                child: AdCard(ad: ad, isGridItem: true),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

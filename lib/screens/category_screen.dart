@@ -775,4 +775,5 @@ class _CategoryScreenState extends State<CategoryScreen> {
         onTap: _onNavItemTapped,
       ),
     );
-  }}
+  }
+}

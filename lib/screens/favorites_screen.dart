@@ -269,7 +269,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       ),
     );
   }
-
   Widget _buildFavoritesList() {
     return RefreshIndicator(
       onRefresh: _refreshFavorites,
@@ -282,19 +281,23 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             const SizedBox(height: 10),
             SizedBox(
               height: 250,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: featuredFavorites.length,
-                itemBuilder: (context, index) {
-                  final ad = featuredFavorites[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: SizedBox(
-                      width: 160,
-                      child: _buildFavoriteAdCard(ad),
-                    ),
-                  );
-                },
+              child: Directionality(
+                textDirection: TextDirection.rtl, // إضافة هذا السطر
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  reverse: true, // هذا السطر مهم لبدء العرض من اليمين
+                  itemCount: featuredFavorites.length,
+                  itemBuilder: (context, index) {
+                    final ad = featuredFavorites[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 12), // تغيير right إلى left
+                      child: SizedBox(
+                        width: 160,
+                        child: _buildFavoriteAdCard(ad),
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -304,19 +307,23 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             const SizedBox(height: 10),
             SizedBox(
               height: 250,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: regularFavorites.length,
-                itemBuilder: (context, index) {
-                  final ad = regularFavorites[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: SizedBox(
-                      width: 160,
-                      child: _buildFavoriteAdCard(ad),
-                    ),
-                  );
-                },
+              child: Directionality(
+                textDirection: TextDirection.ltr, // إضافة هذا السطر
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  reverse: true, // هذا السطر مهم لبدء العرض من اليمين
+                  itemCount: regularFavorites.length,
+                  itemBuilder: (context, index) {
+                    final ad = regularFavorites[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 12), // تغيير right إلى left
+                      child: SizedBox(
+                        width: 160,
+                        child: _buildFavoriteAdCard(ad),
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -325,7 +332,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       ),
     );
   }
-
   Widget _buildSectionHeader(String title, int count) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
